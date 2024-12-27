@@ -1,0 +1,21 @@
+[run]
+source = .
+omit = 
+    tests/*
+    setup.py
+    venv/*
+    env/*
+    .venv/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    pass
+    raise AssertionError
+    raise ImportError
+
+[html]
+directory = coverage_html

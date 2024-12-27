@@ -3,7 +3,10 @@
 # dependencies = [
 #     "google-generativeai",
 #     "pyperclip",
-#     "click",
+#     "click>=8.0.0",
+#     "pytest>=7.0.0",
+#     "pytest-cov>=4.1.0",
+#     "coverage>=7.4.0",
 # ]
 # ///
 
