@@ -72,3 +72,4 @@ venv/
 Thumbs.db
 
 .clinerules
+.clinelog.md

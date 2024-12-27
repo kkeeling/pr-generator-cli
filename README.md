@@ -6,20 +6,16 @@ A command-line tool that uses Google's Gemini AI to automatically generate pull 
 
 - Python >= 3.12
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
-- Git
-- Google API key (either GEMINI_API_KEY or GOOGLE_API_KEY environment variable)
+- Google API key
 
-## Installation
+## Installation (easier to run directly from repo)
 
-1. Clone the repository:
+Clone this repository, and then follow basic usage below.
+
 ```bash
-git clone https://github.com/yourusername/pr-generator-cli.git
+git clone https://github.com/kkeeling/pr-generator-cli.git
 cd pr-generator-cli
-```
-
-2. Install dependencies using uv:
-```bash
-uv pip install .
+uv run pr_generator_cli.py
 ```
 
 ## Usage
@@ -27,10 +23,11 @@ uv pip install .
 The basic usage is:
 
 ```bash
-uv run python pr_generator_cli.py --api-key YOUR_GEMINI_API_KEY
+uv run pr_generator_cli.py --api-key YOUR_GEMINI_API_KEY
 ```
 
 This will:
+
 1. Compare your current branch against 'main'
 2. Generate a PR description using Gemini AI
 3. Copy the description to your clipboard
@@ -38,7 +35,7 @@ This will:
 ### Command Options
 
 ```bash
-uv run python pr_generator_cli.py --help
+uv run pr_generator_cli.py --help
 ```
 
 - `--repo-path PATH`: Path to the git repository (defaults to current directory)
@@ -46,13 +43,23 @@ uv run python pr_generator_cli.py --help
 - `--compare-branch TEXT`: Branch to compare against (defaults to 'main')
 - `--api-key TEXT`: Google API key (can be set via GEMINI_API_KEY or GOOGLE_API_KEY environment variable)
 
+### Remote Execution
+
+You can run the script directly from GitHub without cloning the repository:
+
+```bash
+uv run https://raw.githubusercontent.com/kkeeling/pr-generator-cli/refs/heads/main/pr_generator_cli.py --api-key your-api-key
+```
+
+This will automatically download and execute the latest version of the script.
+
 ### Examples
 
 1. Using environment variable for API key:
 ```bash
 # Using GEMINI_API_KEY
 export GEMINI_API_KEY=your-api-key
-uv run python pr_generator_cli.py
+uv run pr_generator_cli.py
 
 # Or using GOOGLE_API_KEY
 export GOOGLE_API_KEY=your-api-key
@@ -61,17 +68,17 @@ uv run python pr_generator_cli.py
 
 2. Comparing against a different branch:
 ```bash
-uv run python pr_generator_cli.py --compare-branch develop --api-key your-api-key
+uv run pr_generator_cli.py --compare-branch develop --api-key your-api-key
 ```
 
 3. Using a custom template:
 ```bash
-uv run python pr_generator_cli.py --template custom-template.xml --api-key your-api-key
+uv run pr_generator_cli.py --template custom-template.xml --api-key your-api-key
 ```
 
 4. Specifying a different repository:
 ```bash
-uv run python pr_generator_cli.py --repo-path /path/to/repo --api-key your-api-key
+uv run pr_generator_cli.py --repo-path /path/to/repo --api-key your-api-key
 ```
 
 ## Development
@@ -82,11 +89,6 @@ uv run python pr_generator_cli.py --repo-path /path/to/repo --api-key your-api-k
 ```bash
 git clone https://github.com/yourusername/pr-generator-cli.git
 cd pr-generator-cli
-```
-
-2. Install development dependencies:
-```bash
-uv pip install -e ".[dev]"
 ```
 
 ### Running Tests
