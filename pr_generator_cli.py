@@ -73,6 +73,10 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
     try:
         response = model.generate_content(prompt)
         if response.text:
+            # Split response at "OUTPUT:" and return only the output section
+            parts = response.text.split("OUTPUT:")
+            if len(parts) > 1:
+                return parts[1].strip()
             return response.text
         else:
             raise click.ClickException("No response generated from Gemini")
