@@ -39,7 +39,7 @@ uv run pr_generator_cli.py --help
 ```
 
 - `--repo-path PATH`: Path to the git repository (defaults to current directory)
-- `--template PATH`: Path to the XML prompt template file (defaults to 'write-pr-volato-prompt.xml')
+- `--template PATH/URL`: Path or URL to the XML prompt template file (defaults to GitHub URL of write-pr-volato-prompt.xml)
 - `--compare-branch TEXT`: Branch to compare against (defaults to 'main')
 - `--api-key TEXT`: Google API key (can be set via GEMINI_API_KEY or GOOGLE_API_KEY environment variable)
 
@@ -71,9 +71,13 @@ uv run python pr_generator_cli.py
 uv run pr_generator_cli.py --compare-branch develop --api-key your-api-key
 ```
 
-3. Using a custom template:
+3. Using a custom template (local file or URL):
 ```bash
+# Local file
 uv run pr_generator_cli.py --template custom-template.xml --api-key your-api-key
+
+# URL
+uv run pr_generator_cli.py --template https://example.com/custom-template.xml --api-key your-api-key
 ```
 
 4. Specifying a different repository:

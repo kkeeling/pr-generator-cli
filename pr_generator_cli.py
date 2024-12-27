@@ -7,22 +7,32 @@
 #     "pytest>=7.0.0",
 #     "pytest-cov>=4.1.0",
 #     "coverage>=7.4.0",
+#     "requests>=2.31.0",
 # ]
 # ///
 
 import sys
 import pathlib
 import subprocess
-from typing import Optional
+import requests
+from typing import Optional, Union
 import google.generativeai as genai
 import pyperclip
 import click
 
-def load_prompt_template(path: pathlib.Path) -> str:
-    """Load the XML prompt template from the given path."""
-    if not path.exists():
-        raise click.ClickException(f"Prompt template file not found: {path}")
-    return path.read_text()
+def load_prompt_template(path_or_url: Union[pathlib.Path, str]) -> str:
+    """Load the XML prompt template from the given path or URL."""
+    if isinstance(path_or_url, pathlib.Path):
+        if not path_or_url.exists():
+            raise click.ClickException(f"Prompt template file not found: {path_or_url}")
+        return path_or_url.read_text()
+    else:
+        try:
+            response = requests.get(path_or_url)
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as e:
+            raise click.ClickException(f"Failed to fetch template from URL: {str(e)}")
 
 def get_git_diff(repo_path: pathlib.Path, compare_branch: str = "main") -> str:
     """Get git diff between current branch and specified branch."""
@@ -94,9 +104,9 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
 )
 @click.option(
     '--template',
-    type=click.Path(exists=True, path_type=pathlib.Path),
-    default='write-pr-volato-prompt.xml',
-    help='Path to the XML prompt template file'
+    type=str,
+    default='https://raw.githubusercontent.com/kkeeling/pr-generator-cli/refs/heads/main/write-pr-volato-prompt.xml',
+    help='Path or URL to the XML prompt template file'
 )
 @click.option(
     '--compare-branch',
@@ -111,7 +121,7 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
 )
 def main(
     repo_path: pathlib.Path,
-    template: pathlib.Path,
+    template: str,
     compare_branch: str,
     api_key: Optional[str]
 ):
@@ -120,15 +130,15 @@ def main(
     This tool compares the current branch against a specified branch (default: main),
     generates a PR description using the diff, and copies it to your clipboard.
     """
-    try:
-        if not api_key:
-            raise click.ClickException(
-                "No API key provided. Set either GEMINI_API_KEY or GOOGLE_API_KEY environment variable, "
-                "or provide --api-key option"
-            )
+    if not api_key:
+        raise click.ClickException(
+            "No API key provided. Set either GEMINI_API_KEY or GOOGLE_API_KEY environment variable, "
+            "or provide --api-key option"
+        )
 
-        template_content = load_prompt_template(template)
+    try:
         diff_content = get_git_diff(repo_path, compare_branch)
+        template_content = load_prompt_template(template)
         
         print(f"\nAnalyzing changes between current branch and '{compare_branch}'...")
         pr_description = generate_pr_description(template_content, diff_content, api_key)

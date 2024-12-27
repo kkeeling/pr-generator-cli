@@ -1,6 +1,7 @@
 import pathlib
 import subprocess
 import sys
+import requests
 from typing import Optional
 from unittest.mock import Mock, patch, mock_open
 import pytest
@@ -29,14 +30,32 @@ def mock_repo_path(tmp_path):
     return repo_dir
 
 # Test load_prompt_template
-def test_load_prompt_template_success(mock_template_path):
+def test_load_prompt_template_local_success(mock_template_path):
     result = load_prompt_template(mock_template_path)
     assert result == "<template>[[user-input]]</template>"
 
-def test_load_prompt_template_file_not_found():
+def test_load_prompt_template_local_file_not_found():
     with pytest.raises(click.ClickException) as exc_info:
         load_prompt_template(pathlib.Path("nonexistent.xml"))
     assert "Prompt template file not found" in str(exc_info.value)
+
+@patch('requests.get')
+def test_load_prompt_template_url_success(mock_get):
+    mock_response = Mock()
+    mock_response.text = "<template>[[user-input]]</template>"
+    mock_get.return_value = mock_response
+    
+    result = load_prompt_template("https://example.com/template.xml")
+    assert result == "<template>[[user-input]]</template>"
+    mock_get.assert_called_once_with("https://example.com/template.xml")
+
+@patch('requests.get')
+def test_load_prompt_template_url_failure(mock_get):
+    mock_get.side_effect = requests.RequestException("Failed to fetch")
+    
+    with pytest.raises(click.ClickException) as exc_info:
+        load_prompt_template("https://example.com/template.xml")
+    assert "Failed to fetch template from URL" in str(exc_info.value)
 
 # Test get_git_diff
 @patch('subprocess.run')
@@ -60,7 +79,7 @@ def test_get_git_diff_success(mock_run, mock_repo_path):
         check=True
     )
     mock_run.assert_any_call(
-        ["git", "diff", "main...HEAD"],
+        ["git", "--no-pager", "diff", "main...HEAD"],
         cwd=mock_repo_path,
         capture_output=True,
         text=True,
@@ -113,7 +132,7 @@ def test_generate_pr_description_success(mock_configure, mock_model_class):
     
     assert result == "Generated PR description"
     mock_configure.assert_called_once_with(api_key="fake-api-key")
-    mock_model_class.assert_called_once_with('gemini-pro')
+    mock_model_class.assert_called_once_with('gemini-2.0-flash-thinking-exp')
     mock_model.generate_content.assert_called_once_with("<template>test diff content</template>")
 
 @patch('google.generativeai.GenerativeModel')
@@ -149,7 +168,7 @@ def test_generate_pr_description_api_error(mock_configure, mock_model_class):
     assert "Error generating content: API error" in str(exc_info.value)
 
 # Test main CLI command
-def test_main_success_with_api_key_option(mock_template_path, mock_repo_path):
+def test_main_success_with_api_key_option_local_template(mock_template_path, mock_repo_path):
     with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
          patch('pr_generator_cli.get_git_diff') as mock_get_diff, \
          patch('pr_generator_cli.generate_pr_description') as mock_generate, \
@@ -179,7 +198,7 @@ def test_main_success_with_api_key_option(mock_template_path, mock_repo_path):
         mock_generate.assert_called_once()
         mock_copy.assert_called_once_with("Generated PR description")
 
-def test_main_success_with_gemini_env_var(mock_template_path, mock_repo_path):
+def test_main_success_with_gemini_env_var_url_template(mock_repo_path):
     with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
          patch('pr_generator_cli.get_git_diff') as mock_get_diff, \
          patch('pr_generator_cli.generate_pr_description') as mock_generate, \
@@ -237,23 +256,20 @@ def test_main_success_with_google_env_var(mock_template_path, mock_repo_path):
         mock_generate.assert_called_once()
         mock_copy.assert_called_once_with("Generated PR description")
 
-def test_main_no_api_key(mock_template_path, mock_repo_path):
+def test_main_no_api_key():
     """Test that the script fails when no API key is provided."""
     runner = CliRunner()
     result = runner.invoke(
         main,
-        [
-            '--repo-path', str(mock_repo_path),
-            '--template', str(mock_template_path),
-            '--compare-branch', 'main'
-        ]
+        ['--repo-path', '.', '--compare-branch', 'main', '--template', 'test.xml']
     )
     
     assert result.exit_code == 1
     assert "No API key provided" in result.output
 
 def test_main_click_exception(mock_template_path, mock_repo_path):
-    with patch('pr_generator_cli.load_prompt_template') as mock_load_template:
+    with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
+         patch('pr_generator_cli.get_git_diff') as mock_get_diff:
         # Mock ClickException
         mock_load_template.side_effect = click.ClickException("Test error")
         
@@ -272,7 +288,8 @@ def test_main_click_exception(mock_template_path, mock_repo_path):
         assert "Error: Test error" in result.output
 
 def test_main_unexpected_exception(mock_template_path, mock_repo_path):
-    with patch('pr_generator_cli.load_prompt_template') as mock_load_template:
+    with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
+         patch('pr_generator_cli.get_git_diff') as mock_get_diff:
         # Mock unexpected exception
         mock_load_template.side_effect = Exception("Unexpected error")
         
@@ -290,7 +307,7 @@ def test_main_unexpected_exception(mock_template_path, mock_repo_path):
         assert result.exit_code == 1
         assert "Unexpected error: Unexpected error" in result.output
 
-def test_main_script(monkeypatch, mock_template_path, mock_repo_path):
+def test_main_script(monkeypatch):
     """Test the __main__ block."""
     with patch('subprocess.run') as mock_run, \
          patch('google.generativeai.GenerativeModel') as mock_model_class, \
@@ -310,12 +327,11 @@ def test_main_script(monkeypatch, mock_template_path, mock_repo_path):
         
         # Mock sys.argv to provide required arguments
         monkeypatch.setattr('sys.argv', [
-            'pr_generator_cli.py',
-            '--repo-path', str(mock_repo_path),
-            '--template', str(mock_template_path),
-            '--compare-branch', 'main',
-            '--api-key', 'test-key'
-        ])
+                'pr_generator_cli.py',
+                '--repo-path', '.',
+                '--compare-branch', 'main',
+                '--api-key', 'test-key'
+            ])
         
         # Read and execute the script
         with open('pr_generator_cli.py', 'r') as f:
@@ -345,14 +361,14 @@ def test_main_script(monkeypatch, mock_template_path, mock_repo_path):
         # Verify the mocks were called correctly
         mock_run.assert_any_call(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            cwd=mock_repo_path,
+            cwd=pathlib.Path('.'),
             capture_output=True,
             text=True,
             check=True
         )
         mock_run.assert_any_call(
-            ["git", "diff", "main...HEAD"],
-            cwd=mock_repo_path,
+            ["git", "--no-pager", "diff", "main...HEAD"],
+            cwd=pathlib.Path('.'),
             capture_output=True,
             text=True,
             check=True
