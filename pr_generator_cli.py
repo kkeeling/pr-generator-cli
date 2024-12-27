@@ -44,7 +44,7 @@ def get_git_diff(repo_path: pathlib.Path, compare_branch: str = "main") -> str:
         
         # Get the diff
         result = subprocess.run(
-            ["git", "diff", compare_branch + "...HEAD"],
+            ["git", "--no-pager", "diff", compare_branch + "...HEAD"],
             cwd=repo_path,
             capture_output=True,
             text=True,
@@ -65,7 +65,7 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
     """Generate PR description using Gemini API."""
     # Configure Gemini
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-pro')
+    model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp')
     
     # Replace placeholder with diff content
     prompt = template.replace("[[user-input]]", diff_content)
