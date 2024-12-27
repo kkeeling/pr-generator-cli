@@ -149,7 +149,7 @@ def test_generate_pr_description_api_error(mock_configure, mock_model_class):
     assert "Error generating content: API error" in str(exc_info.value)
 
 # Test main CLI command
-def test_main_success(mock_template_path, mock_repo_path):
+def test_main_success_with_api_key_option(mock_template_path, mock_repo_path):
     with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
          patch('pr_generator_cli.get_git_diff') as mock_get_diff, \
          patch('pr_generator_cli.generate_pr_description') as mock_generate, \
@@ -161,7 +161,7 @@ def test_main_success(mock_template_path, mock_repo_path):
         mock_get_diff.return_value = "test diff content"
         mock_generate.return_value = "Generated PR description"
         
-        # Create runner and invoke command
+        # Create runner and invoke command with --api-key
         runner = CliRunner()
         result = runner.invoke(
             main,
@@ -178,6 +178,79 @@ def test_main_success(mock_template_path, mock_repo_path):
         mock_get_diff.assert_called_once()
         mock_generate.assert_called_once()
         mock_copy.assert_called_once_with("Generated PR description")
+
+def test_main_success_with_gemini_env_var(mock_template_path, mock_repo_path):
+    with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
+         patch('pr_generator_cli.get_git_diff') as mock_get_diff, \
+         patch('pr_generator_cli.generate_pr_description') as mock_generate, \
+         patch('pyperclip.copy') as mock_copy, \
+         patch('click.echo') as mock_echo:
+        
+        # Mock return values
+        mock_load_template.return_value = "<template>[[user-input]]</template>"
+        mock_get_diff.return_value = "test diff content"
+        mock_generate.return_value = "Generated PR description"
+        
+        # Create runner and invoke command with GEMINI_API_KEY env var
+        runner = CliRunner(env={'GEMINI_API_KEY': 'fake-api-key'})
+        result = runner.invoke(
+            main,
+            [
+                '--repo-path', str(mock_repo_path),
+                '--template', str(mock_template_path),
+                '--compare-branch', 'main'
+            ]
+        )
+        
+        assert result.exit_code == 0
+        mock_load_template.assert_called_once()
+        mock_get_diff.assert_called_once()
+        mock_generate.assert_called_once()
+        mock_copy.assert_called_once_with("Generated PR description")
+
+def test_main_success_with_google_env_var(mock_template_path, mock_repo_path):
+    with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
+         patch('pr_generator_cli.get_git_diff') as mock_get_diff, \
+         patch('pr_generator_cli.generate_pr_description') as mock_generate, \
+         patch('pyperclip.copy') as mock_copy, \
+         patch('click.echo') as mock_echo:
+        
+        # Mock return values
+        mock_load_template.return_value = "<template>[[user-input]]</template>"
+        mock_get_diff.return_value = "test diff content"
+        mock_generate.return_value = "Generated PR description"
+        
+        # Create runner and invoke command with GOOGLE_API_KEY env var
+        runner = CliRunner(env={'GOOGLE_API_KEY': 'fake-api-key'})
+        result = runner.invoke(
+            main,
+            [
+                '--repo-path', str(mock_repo_path),
+                '--template', str(mock_template_path),
+                '--compare-branch', 'main'
+            ]
+        )
+        
+        assert result.exit_code == 0
+        mock_load_template.assert_called_once()
+        mock_get_diff.assert_called_once()
+        mock_generate.assert_called_once()
+        mock_copy.assert_called_once_with("Generated PR description")
+
+def test_main_no_api_key(mock_template_path, mock_repo_path):
+    """Test that the script fails when no API key is provided."""
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        [
+            '--repo-path', str(mock_repo_path),
+            '--template', str(mock_template_path),
+            '--compare-branch', 'main'
+        ]
+    )
+    
+    assert result.exit_code == 1
+    assert "No API key provided" in result.output
 
 def test_main_click_exception(mock_template_path, mock_repo_path):
     with patch('pr_generator_cli.load_prompt_template') as mock_load_template:

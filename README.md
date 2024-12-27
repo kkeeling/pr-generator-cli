@@ -7,7 +7,7 @@ A command-line tool that uses Google's Gemini AI to automatically generate pull 
 - Python >= 3.12
 - [uv](https://github.com/astral-sh/uv) - Fast Python package installer and resolver
 - Git
-- Google Gemini API key
+- Google API key (either GEMINI_API_KEY or GOOGLE_API_KEY environment variable)
 
 ## Installation
 
@@ -44,13 +44,18 @@ uv run python pr_generator_cli.py --help
 - `--repo-path PATH`: Path to the git repository (defaults to current directory)
 - `--template PATH`: Path to the XML prompt template file (defaults to 'write-pr-volato-prompt.xml')
 - `--compare-branch TEXT`: Branch to compare against (defaults to 'main')
-- `--api-key TEXT`: Google Gemini API key (can also be set via GEMINI_API_KEY environment variable)
+- `--api-key TEXT`: Google API key (can be set via GEMINI_API_KEY or GOOGLE_API_KEY environment variable)
 
 ### Examples
 
 1. Using environment variable for API key:
 ```bash
+# Using GEMINI_API_KEY
 export GEMINI_API_KEY=your-api-key
+uv run python pr_generator_cli.py
+
+# Or using GOOGLE_API_KEY
+export GOOGLE_API_KEY=your-api-key
 uv run python pr_generator_cli.py
 ```
 
@@ -127,7 +132,7 @@ You can customize the template by creating your own XML file following the same 
 
 The tool handles various error cases:
 
-- Invalid API key
+- Missing or invalid API key (checks both GEMINI_API_KEY and GOOGLE_API_KEY)
 - Git repository errors
 - Same branch comparison
 - No differences between branches

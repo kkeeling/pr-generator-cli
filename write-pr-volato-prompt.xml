@@ -1,19 +1,30 @@
 <purpose>
-    You are an experienced software engineer about to open a PR. You will read the INPUT, which is a git diff output, and draft a clear, concise pull request description in Markdown. You will first analyze the changes in a thinking section, then provide only the final PR description.
+    You are an experienced software engineer about to open a PR. You will read the INPUT, which is a git diff output, and draft a clear, concise pull request description in Markdown. Your response must be in two clearly marked sections.
 </purpose>
 
 <instructions>
-        <instruction>Start with a "THINKING:" section where you:</instruction>
-        <instruction>1. Analyze the git diff output provided</instruction>
-        <instruction>2. Identify changes (added, modified, deleted files)</instruction>
-        <instruction>3. Understand the purpose of changes</instruction>
-        <instruction>4. Plan your PR description</instruction>
+    <instruction>Your response must follow this EXACT format:</instruction>
 
-        <instruction>Then, after "OUTPUT:" provide only:</instruction>
-        <instruction>1. The PR Title</instruction>
-        <instruction>2. The PR Description following the output format exactly</instruction>
-        <instruction>3. No thinking steps or analysis in the output</instruction>
-        <instruction>4. Matter-of-fact, clear, and concise language</instruction>
+    <instruction>Section 1 - Start with:</instruction>
+    <instruction>### THINKING ###</instruction>
+    <instruction>1. List all added, modified, and deleted files</instruction>
+    <instruction>2. Understand the purpose of each change</instruction>
+    <instruction>3. Plan the PR description</instruction>
+    <instruction>### END THINKING ###</instruction>
+
+    <instruction>Section 2 - Follow immediately with:</instruction>
+    <instruction>### OUTPUT ###</instruction>
+    <instruction>1. PR Title (one line)</instruction>
+    <instruction>2. Blank line</instruction>
+    <instruction>3. Pre-submission checklist (copy from output-format)</instruction>
+    <instruction>4. The six numbered sections (copy from output-format)</instruction>
+    <instruction>### END OUTPUT ###</instruction>
+
+    <instruction>Critical rules for the OUTPUT section:</instruction>
+    <instruction>- Copy the format EXACTLY as shown in output-format</instruction>
+    <instruction>- NO analysis, thoughts, or markdown code blocks</instruction>
+    <instruction>- NO extra text or explanations</instruction>
+    <instruction>- ONLY the PR title, checklist, and six sections</instruction>
 </instructions>
 
 <input-format>
@@ -22,35 +33,35 @@
 </input-format>
 
 <examples>
-        <example>
-                <description>Adding a file</description>
-                <diff-snippet>
+    <example>
+        <description>Adding a file</description>
+        <diff-snippet>
             +++ b/newfile.txt  
             @@ -0,0 +1 @@  
             +This is the contents of the new file.
-                </diff-snippet>
-                <explanation>
+        </diff-snippet>
+        <explanation>
             The line '+++ b/newfile.txt' indicates a new file.  
             '@@ -0,0 +1 @@' shows the first line of the new file contains text.  
-                </explanation>
-        </example>
-        <example>
-                <description>Deleting a file</description>
-                <diff-snippet>
+        </explanation>
+    </example>
+    <example>
+        <description>Deleting a file</description>
+        <diff-snippet>
             --- a/oldfile.txt  
             +++ b/deleted  
             @@ -1 +0,0 @@  
             -This is the contents of the old file.
-                </diff-snippet>
-                <explanation>
+        </diff-snippet>
+        <explanation>
             '--- a/oldfile.txt' indicates removal of an old file.  
             '@@ -1 +0,0 @@' shows the old file's content being removed.  
             '+++ b/deleted' indicates the file is deleted.  
-                </explanation>
-        </example>
-        <example>
-                <description>Modifying a file</description>
-                <diff-snippet>
+        </explanation>
+    </example>
+    <example>
+        <description>Modifying a file</description>
+        <diff-snippet>
             --- a/oldfile.txt  
             +++ b/newfile.txt  
             @@ -1,3 +1,4 @@  
@@ -58,12 +69,12 @@
             -The first line of the old file contains this text.  
              The second line contains this other text.  
             +This is the contents of the new file.
-                </diff-snippet>
-                <explanation>
+        </diff-snippet>
+        <explanation>
             '--- a/oldfile.txt' and '+++ b/newfile.txt' indicate changes in a file.  
             '@@ -1,3 +1,4 @@' shows lines replaced with new lines.  
-                </explanation>
-        </example>
+        </explanation>
+    </example>
 </examples>
 
 <output-format>

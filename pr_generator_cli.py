@@ -73,10 +73,12 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
     try:
         response = model.generate_content(prompt)
         if response.text:
-            # Split response at "OUTPUT:" and return only the output section
-            parts = response.text.split("OUTPUT:")
+            # Extract content between OUTPUT markers
+            parts = response.text.split("### OUTPUT ###")
             if len(parts) > 1:
-                return parts[1].strip()
+                output_parts = parts[1].split("### END OUTPUT ###")
+                if len(output_parts) > 0:
+                    return output_parts[0].strip()
             return response.text
         else:
             raise click.ClickException("No response generated from Gemini")
@@ -104,15 +106,14 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
 )
 @click.option(
     '--api-key',
-    envvar='GEMINI_API_KEY',
-    required=True,
-    help='Google Gemini API key (can also be set via GEMINI_API_KEY environment variable)'
+    envvar=['GEMINI_API_KEY', 'GOOGLE_API_KEY'],
+    help='Google API key (can be set via GEMINI_API_KEY or GOOGLE_API_KEY environment variable)'
 )
 def main(
     repo_path: pathlib.Path,
     template: pathlib.Path,
     compare_branch: str,
-    api_key: str
+    api_key: Optional[str]
 ):
     """Generate a PR description using Google's Gemini AI and copy it to clipboard.
     
@@ -120,6 +121,12 @@ def main(
     generates a PR description using the diff, and copies it to your clipboard.
     """
     try:
+        if not api_key:
+            raise click.ClickException(
+                "No API key provided. Set either GEMINI_API_KEY or GOOGLE_API_KEY environment variable, "
+                "or provide --api-key option"
+            )
+
         template_content = load_prompt_template(template)
         diff_content = get_git_diff(repo_path, compare_branch)
         
