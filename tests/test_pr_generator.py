@@ -258,14 +258,35 @@ def test_main_success_with_google_env_var(mock_template_path, mock_repo_path):
 
 def test_main_no_api_key():
     """Test that the script fails when no API key is provided."""
-    runner = CliRunner()
-    result = runner.invoke(
-        main,
-        ['--repo-path', '.', '--compare-branch', 'main', '--template', 'test.xml']
-    )
-    
-    assert result.exit_code == 1
-    assert "No API key provided" in result.output
+    with patch.dict('os.environ', {}, clear=True), \
+         patch('pathlib.Path.exists') as mock_exists, \
+         patch('subprocess.run') as mock_run, \
+         patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
+         patch('pr_generator_cli.get_git_diff') as mock_get_diff, \
+         patch('pr_generator_cli.generate_pr_description') as mock_generate, \
+         patch('click.echo') as mock_echo:
+        
+        # Mock file system and subprocess to prevent actual operations
+        mock_exists.return_value = True
+        mock_run.return_value = Mock(stdout="feature-branch\n", stderr="", returncode=0)
+        
+        # Create runner with empty env to ensure no API keys
+        runner = CliRunner()
+        
+        # Invoke command with empty environment
+        result = runner.invoke(main, [
+            '--repo-path', '.',
+            '--compare-branch', 'main',
+            '--template', 'test.xml'
+        ], env={})
+        
+        assert result.exit_code == 1
+        assert "No API key provided" in result.output
+        # Functions should not be called since API key validation happens first
+        mock_load_template.assert_not_called()
+        mock_get_diff.assert_not_called()
+        mock_generate.assert_not_called()
+        mock_run.assert_not_called()
 
 def test_main_click_exception(mock_template_path, mock_repo_path):
     with patch('pr_generator_cli.load_prompt_template') as mock_load_template, \
