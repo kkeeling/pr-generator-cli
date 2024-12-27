@@ -8,46 +8,47 @@
         <instruction>Identify the changes made in the code, including added, modified, and deleted files.</instruction>
         <instruction>Understand the purpose of these changes by examining the code and any comments.</instruction>
         <instruction>Write a detailed pull request description in markdown syntax.</instruction>
-        <instruction>Ensure your description is written in a "matter of fact", clear, and concise language.</instruction>
-        <instruction>Use markdown code blocks to reference specific lines of code when necessary.</instruction>
-        <instruction>Output only the PR description and PR Title.</instruction>
-</instructions>
+        <instruction>Follow the <output-format> exactly.</instruction>
+                <instruction>Ensure your description is written in a "matter of fact", clear, and concise language.</instruction>
+                <instruction>Use markdown code blocks to reference specific lines of code when necessary.</instruction>
+                <instruction>Output only the PR description and PR Title.</instruction>
+        </instructions>
 
-<input-format>
+        <input-format>
     The expected input format is command line output from git diff that compares all the changes of the current branch with the main repository branch.  
     Each line represents a change in a file, and the format depends on the type of change.  
-</input-format>
+        </input-format>
 
-<examples>
-        <example>
-                <description>Adding a file</description>
-                <diff-snippet>
+        <examples>
+                <example>
+                        <description>Adding a file</description>
+                        <diff-snippet>
             +++ b/newfile.txt  
             @@ -0,0 +1 @@  
             +This is the contents of the new file.
-                </diff-snippet>
-                <explanation>
+                        </diff-snippet>
+                        <explanation>
             The line '+++ b/newfile.txt' indicates a new file.  
             '@@ -0,0 +1 @@' shows the first line of the new file contains text.  
-                </explanation>
-        </example>
-        <example>
-                <description>Deleting a file</description>
-                <diff-snippet>
+                        </explanation>
+                </example>
+                <example>
+                        <description>Deleting a file</description>
+                        <diff-snippet>
             --- a/oldfile.txt  
             +++ b/deleted  
             @@ -1 +0,0 @@  
             -This is the contents of the old file.
-                </diff-snippet>
-                <explanation>
+                        </diff-snippet>
+                        <explanation>
             '--- a/oldfile.txt' indicates removal of an old file.  
             '@@ -1 +0,0 @@' shows the old file's content being removed.  
             '+++ b/deleted' indicates the file is deleted.  
-                </explanation>
-        </example>
-        <example>
-                <description>Modifying a file</description>
-                <diff-snippet>
+                        </explanation>
+                </example>
+                <example>
+                        <description>Modifying a file</description>
+                        <diff-snippet>
             --- a/oldfile.txt  
             +++ b/newfile.txt  
             @@ -1,3 +1,4 @@  
@@ -55,15 +56,15 @@
             -The first line of the old file contains this text.  
              The second line contains this other text.  
             +This is the contents of the new file.
-                </diff-snippet>
-                <explanation>
+                        </diff-snippet>
+                        <explanation>
             '--- a/oldfile.txt' and '+++ b/newfile.txt' indicate changes in a file.  
             '@@ -1,3 +1,4 @@' shows lines replaced with new lines.  
-                </explanation>
-        </example>
-</examples>
+                        </explanation>
+                </example>
+        </examples>
 
-<output-format>
+        <output-format>
     Before submitting this PR, please make sure:
     - [x] Your code builds clean without any new errors or warnings
     - [x] You have removed console.log messages that were used for testing
@@ -87,8 +88,8 @@
 
     **6 - Anything else unique to this PR?**  
     Include any extra notes or comments.
-</output-format>
+        </output-format>
 
-<user-input>
+        <user-input>
     [[user-input]]
-</user-input>
+        </user-input>
