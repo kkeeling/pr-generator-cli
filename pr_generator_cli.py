@@ -54,7 +54,7 @@ def get_git_diff(repo_path: pathlib.Path, compare_branch: str = "main") -> str:
         
         # Get the diff excluding .lock files
         result = subprocess.run(
-            ["git", "--no-pager", "diff", compare_branch + "...HEAD ':!*.lock'"],
+            ["git", "--no-pager", "diff", compare_branch + "':!*.lock'"],
             cwd=repo_path,
             capture_output=True,
             text=True,
