@@ -79,7 +79,7 @@ def test_get_git_diff_success(mock_run, mock_repo_path):
         check=True
     )
     mock_run.assert_any_call(
-        ["git", "--no-pager", "diff", "--exclude=*.lock", "main...HEAD"],
+        ["git", "--no-pager", "diff", "main...HEAD ':!*.lock'"],
         cwd=mock_repo_path,
         capture_output=True,
         text=True,
@@ -388,7 +388,7 @@ def test_main_script(monkeypatch):
             check=True
         )
         mock_run.assert_any_call(
-            ["git", "--no-pager", "diff", "--exclude=*.lock", "main...HEAD"],
+            ["git", "--no-pager", "diff", "main...HEAD ':!*.lock'"],
             cwd=pathlib.Path('.'),
             capture_output=True,
             text=True,
