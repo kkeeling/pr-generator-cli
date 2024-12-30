@@ -52,9 +52,9 @@ def get_git_diff(repo_path: pathlib.Path, compare_branch: str = "main") -> str:
                 f"Current branch '{current_branch}' is the same as comparison branch '{compare_branch}'"
             )
         
-        # Get the diff
+        # Get the diff excluding .lock files
         result = subprocess.run(
-            ["git", "--no-pager", "diff", compare_branch + "...HEAD"],
+            ["git", "--no-pager", "diff", "--exclude=*.lock", compare_branch + "...HEAD"],
             cwd=repo_path,
             capture_output=True,
             text=True,
