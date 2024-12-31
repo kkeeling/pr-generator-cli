@@ -54,7 +54,7 @@ def get_git_diff(repo_path: pathlib.Path, compare_branch: str = "main") -> str:
         
         # Get the diff excluding .lock files
         result = subprocess.run(
-            ["git", "--no-pager", "diff", "--diff-filter=ACMR", "--name-status", compare_branch, ":!*.lock"],
+            ["git", "--no-pager", "diff", compare_branch, ":!*.lock"],
             cwd=repo_path,
             capture_output=True,
             text=True,
@@ -72,7 +72,7 @@ def get_git_diff(repo_path: pathlib.Path, compare_branch: str = "main") -> str:
             raise click.ClickException(f"Git error: {e.stderr}")
         raise click.ClickException(f"Failed to execute git command: {str(e)}")
 
-def generate_pr_description(template: str, diff_content: str, api_key: str) -> str:
+def generate_pr_description(template: str, diff_content: str, api_key: str, compare_branch: str = "main") -> str:
     """Generate PR description using Gemini API."""
     # Configure Gemini
     genai.configure(api_key=api_key)
@@ -94,7 +94,38 @@ def generate_pr_description(template: str, diff_content: str, api_key: str) -> s
         else:
             raise click.ClickException("No response generated from Gemini")
     except Exception as e:
-        raise click.ClickException(f"Error generating content: {str(e)}")
+        # If model.generate_content fails, try with simplified diff
+        try:
+            # Get simplified diff
+            result = subprocess.run(
+                ["git", "--no-pager", "diff", "--diff-filter=ACMR", "--name-status", compare_branch, ":!*.lock"],
+                cwd=pathlib.Path.cwd(),
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            if not result.stdout:
+                raise click.ClickException("No differences found between branches")
+            
+            # Replace placeholder with simplified diff content
+            prompt = template.replace("[[user-input]]", result.stdout)
+            response = model.generate_content(prompt)
+            
+            if response.text:
+                parts = response.text.split("### OUTPUT ###")
+                if len(parts) > 1:
+                    output_parts = parts[1].split("### END OUTPUT ###")
+                    if len(output_parts) > 0:
+                        return output_parts[0].strip()
+                return response.text
+            else:
+                raise click.ClickException("No response generated from Gemini")
+        except subprocess.CalledProcessError as git_error:
+            if git_error.stderr:
+                raise click.ClickException(f"Git error: {git_error.stderr}")
+            raise click.ClickException(f"Failed to execute git command: {str(git_error)}")
+        except Exception as retry_error:
+            raise click.ClickException(f"Error generating content: {str(retry_error)}")
 
 @click.command()
 @click.option(

@@ -79,7 +79,7 @@ def test_get_git_diff_success(mock_run, mock_repo_path):
         check=True
     )
     mock_run.assert_any_call(
-        ["git", "--no-pager", "diff", "--diff-filter=ACMR", "--name-status", "main", ":!*.lock"],
+        ["git", "--no-pager", "diff", "main", ":!*.lock"],
         cwd=mock_repo_path,
         capture_output=True,
         text=True,
@@ -127,7 +127,8 @@ def test_generate_pr_description_success(mock_configure, mock_model_class):
     result = generate_pr_description(
         "<template>[[user-input]]</template>",
         "test diff content",
-        "fake-api-key"
+        "fake-api-key",
+        "main"
     )
     
     assert result == "Generated PR description"
@@ -147,23 +148,61 @@ def test_generate_pr_description_empty_response(mock_configure, mock_model_class
         generate_pr_description(
             "<template>[[user-input]]</template>",
             "test diff content",
-            "fake-api-key"
+            "fake-api-key",
+            "main"
         )
     assert "No response generated from Gemini" in str(exc_info.value)
 
 @patch('google.generativeai.GenerativeModel')
 @patch('google.generativeai.configure')
-def test_generate_pr_description_api_error(mock_configure, mock_model_class):
-    # Mock API error
+@patch('subprocess.run')
+def test_generate_pr_description_api_error_with_fallback(mock_run, mock_configure, mock_model_class):
+    # Mock initial API error and successful fallback
+    mock_model = Mock()
+    mock_model.generate_content.side_effect = [
+        Exception("API error"),  # First call fails
+        Mock(text="Generated with fallback")  # Second call succeeds
+    ]
+    mock_model_class.return_value = mock_model
+    
+    # Mock git command for fallback
+    mock_run.return_value = Mock(stdout="simplified diff", stderr="", returncode=0)
+    
+    result = generate_pr_description(
+        "<template>[[user-input]]</template>",
+        "test diff content",
+        "fake-api-key",
+        "main"
+    )
+    
+    assert result == "Generated with fallback"
+    assert mock_model.generate_content.call_count == 2
+    mock_run.assert_called_once_with(
+        ["git", "--no-pager", "diff", "--diff-filter=ACMR", "--name-status", "main", ":!*.lock"],
+        cwd=pathlib.Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=True
+    )
+
+@patch('google.generativeai.GenerativeModel')
+@patch('google.generativeai.configure')
+@patch('subprocess.run')
+def test_generate_pr_description_api_error_with_fallback_failure(mock_run, mock_configure, mock_model_class):
+    # Mock both attempts failing
     mock_model = Mock()
     mock_model.generate_content.side_effect = Exception("API error")
     mock_model_class.return_value = mock_model
+    
+    # Mock git command for fallback
+    mock_run.return_value = Mock(stdout="simplified diff", stderr="", returncode=0)
     
     with pytest.raises(click.ClickException) as exc_info:
         generate_pr_description(
             "<template>[[user-input]]</template>",
             "test diff content",
-            "fake-api-key"
+            "fake-api-key",
+            "main"
         )
     assert "Error generating content: API error" in str(exc_info.value)
 
@@ -388,7 +427,7 @@ def test_main_script(monkeypatch):
             check=True
         )
         mock_run.assert_any_call(
-            ["git", "--no-pager", "diff", "--diff-filter=ACMR", "--name-status", "main", ":!*.lock"],
+            ["git", "--no-pager", "diff", "main", ":!*.lock"],
             cwd=pathlib.Path('.'),
             capture_output=True,
             text=True,
