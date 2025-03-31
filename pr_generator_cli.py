@@ -76,7 +76,7 @@ def generate_pr_description(template: str, diff_content: str, api_key: str, comp
     """Generate PR description using Gemini API."""
     # Configure Gemini
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp')
+    model = genai.GenerativeModel('gemini-2.5-pro-exp-03-25')
     
     # Replace placeholder with diff content
     prompt = template.replace("[[user-input]]", diff_content)
